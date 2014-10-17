@@ -1,14 +1,36 @@
 {% extends "layout.html" %}
 {% block body %}
-  <h2>Login</h2>
-  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
-  <form action="{{ url_for('login') }}" method=post>
-    <dl>
-      <dt>Username:
-      <dd><input type=text name=username>
-      <dt>Password:
-      <dd><input type=password name=password>
-      <dd><input type=submit value=Login>
-    </dl>
-  </form>
+    <h2>Login</h2>
+    {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+    <input type=text name=calc_input value={{ result }} disabled=disabled>
+    <input type=button value="+" onclick="operator_click('add');">
+    <input type=button value="-" onclick="operator_click('sub');">
+    <input type=button value="*" onclick="operator_click('mul');">
+    <input type=button value="/" onclick="operator_click('div');">
+    <form name=calc_params action="{{ url_for('calculator') }}" method=post>
+        <input type=hidden name=operand1>
+        <input type=hidden name=operator>
+        <input type=hidden name=operand2>
+        <input type=submit value=Login>
+    </form>
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript">
+            var operator_click = function(operation) {
+                var form = $('form[name="calc_params"'),
+                    op1 = $('input[name="operand1"]'),
+                    op2 = $('input[name="operand2"]'),
+                    operator = $('input[name="operator"]'),
+                    calc_input = $('input[name="calc_input"')
+
+                if (op1.val() == "") {
+                    op1.val(calc_input.val())
+                    operator.val(operation)
+                } else if (op2.val() == "") {
+                    op2.val(calc_input.val())
+                    form.submit()
+                } else {
+                    form.submit()
+                }
+            }
+    </script>
 {% endblock %}
