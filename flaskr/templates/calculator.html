@@ -1,36 +1,40 @@
 {% extends "layout.html" %}
 {% block body %}
     <h2>Login</h2>
-    {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
-    <input type=text name=calc_input value={{ result }} disabled=disabled>
+    <input type=text name=calc_input value={{ op }}>
+    <br>
     <input type=button value="+" onclick="operator_click('add');">
     <input type=button value="-" onclick="operator_click('sub');">
     <input type=button value="*" onclick="operator_click('mul');">
     <input type=button value="/" onclick="operator_click('div');">
+    <input type=button value="=" onclick="operator_click('');">
     <form name=calc_params action="{{ url_for('calculator') }}" method=post>
-        <input type=hidden name=operand1>
-        <input type=hidden name=operator>
-        <input type=hidden name=operand2>
-        <input type=submit value=Login>
+        <input type=hidden name=op1 value={{ op }}><br>
+        <input type=hidden name=cur_oper value={{ oper }}><br>
+        <input type=hidden name=op2><br>
+        <input type=hidden name=new_oper><br>
     </form>
     <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
     <script type="text/javascript">
+            $('input[name="calc_input"]').select()
             var operator_click = function(operation) {
-                var form = $('form[name="calc_params"'),
-                    op1 = $('input[name="operand1"]'),
-                    op2 = $('input[name="operand2"]'),
-                    operator = $('input[name="operator"]'),
-                    calc_input = $('input[name="calc_input"')
+                var form = $('form[name="calc_params"]'),
+                    op1 = $('input[name="op1"]'),
+                    op2 = $('input[name="op2"]'),
+                    cur_oper = $('input[name="cur_oper"]'),
+                    new_oper = $('input[name="new_oper"]'),
+                    calc_input = $('input[name="calc_input"]')
 
                 if (op1.val() == "") {
                     op1.val(calc_input.val())
-                    operator.val(operation)
+                    cur_oper.val(operation)
                 } else if (op2.val() == "") {
                     op2.val(calc_input.val())
-                    form.submit()
-                } else {
+                    new_oper.val(operation)
                     form.submit()
                 }
+                calc_input.focus()
+                calc_input.select()
             }
     </script>
 {% endblock %}

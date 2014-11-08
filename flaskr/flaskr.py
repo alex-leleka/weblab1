@@ -1,5 +1,5 @@
 # all the imports
-import oper
+import operator
 import sqlite3
 from contextlib import closing
 from flask import Flask, request, session, g, redirect, url_for, \
@@ -12,9 +12,12 @@ DEBUG = True
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
+# app.debug = True
+
 
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
+
 
 def init_db():
     with closing(connect_db()) as db:
@@ -22,9 +25,11 @@ def init_db():
             db.cursor().executescript(f.read())
         db.commit()
 
+
 @app.before_request
 def before_request():
     g.db = connect_db()
+
 
 @app.teardown_request
 def teardown_request(exception):
@@ -32,24 +37,31 @@ def teardown_request(exception):
     if db is not None:
         db.close()
 
+
 @app.route('/history')
 def show_history():
     cur = g.db.execute('SELECT * FROM history ORDER BY id DESC')
     entries = [dict(op1=row[1], oper=row[2], op2=row[3], res=row[4]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
+
 @app.route('/', methods=['GET', 'POST'])
 def calculator():
+    new_oper = ''
+    result = ''
     if request.method == 'POST':
-        op1 = int(request.form['op1'])
-        op2 = int(request.form['op2'])
-        oper = getattr(oper, request.form['oper'], operator.add)
-        result = oper(op1, op2)
-        cur = g.db.execute('INSERT INTO history VALUES %s, %s, "%s", %s;' % (op1, oper, op2, result))
-    else:
-        if request.form['op1']:
-            result = request.form['op1']
-    return render_template('main.html', op1=result)
+        op1 = request.form['op1']
+        op2 = request.form['op2']
+        cur_oper = request.form['cur_oper']
+        new_oper = request.form['new_oper']
+
+        operation = getattr(operator, cur_oper, operator.add)
+        operand1 = int(op1)
+        operand2 = int(op2)
+        result = operation(operand1, operand2)
+        # cur = g.db.execute('INSERT INTO history VALUES %s, %s, "%s", %s;' % (op1, oper, op2, result))
+
+    return render_template('calculator.html', op=result, oper=new_oper)
 
 #@app.route('/add', methods=['POST'])
 #def add_entry():
@@ -80,9 +92,6 @@ def calculator():
     #session.pop('logged_in', None)
     #flash('You were logged out')
     #return redirect(url_for('show_entries'))
-    
 
 if __name__ == '__main__':
-    app.run()
-
-
+    app.run(debug=True)
