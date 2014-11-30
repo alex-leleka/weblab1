@@ -1,10 +1,12 @@
 {% extends "layout.html" %}
 {% block body %}
+  <a href="{{ url_for('calculator') }}"><h2><- Back to calculator</h2></a>
   <ul class=entries>
   {% for entry in entries %}
     <li>{{ entry.op1 }} {{ entry.oper }} {{ entry.op2 }} = {{ entry.res }}
   {% else %}
-    <li><em>Unbelievable.  No entries here so far</em>
+    <li><em>Unbelievable. No history yet</em>
   {% endfor %}
   </ul>
+  <a href="{{ url_for('clear_history') }}"><h3>[Clear history]</h3></a>
 {% endblock %}

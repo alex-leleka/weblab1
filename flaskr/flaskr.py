@@ -1,4 +1,5 @@
 # all the imports
+import logging
 import operator
 import sqlite3
 from contextlib import closing
@@ -6,7 +7,7 @@ from flask import Flask, request, session, g, redirect, url_for, \
      abort, render_template, flash
 
 # configuration
-DATABASE = '/tmp/flaskr.db'
+DATABASE = 'flaskr.db'
 DEBUG = True
 
 # create our little application :)
@@ -40,10 +41,23 @@ def teardown_request(exception):
 
 @app.route('/history')
 def show_history():
-    cur = g.db.execute('SELECT * FROM history ORDER BY id DESC')
-    entries = [dict(op1=row[1], oper=row[2], op2=row[3], res=row[4]) for row in cur.fetchall()]
-    return render_template('show_entries.html', entries=entries)
+    history = g.db.execute('SELECT * FROM entries ORDER BY id DESC').fetchall()
+    entries = [dict(op1=row[1], oper=row[2], op2=row[3], res=row[4]) for row in history]
+    return render_template('show_history.html', entries=entries)
 
+
+@app.route('/clear_history')
+def clear_history():
+    g.db.execute('DELETE FROM entries;')
+    g.db.commit()
+    return show_history()
+
+
+def _to_poly_number(number):
+    n = float(number)
+    if n.is_integer():
+        n = int(n)
+    return n
 
 @app.route('/', methods=['GET', 'POST'])
 def calculator():
@@ -54,12 +68,22 @@ def calculator():
         op2 = request.form['op2']
         cur_oper = request.form['cur_oper']
         new_oper = request.form['new_oper']
+        try:
+            operation = getattr(operator, cur_oper, operator.add)
+            operand1 = _to_poly_number(op1)
+            operand2 = _to_poly_number(op2)
+            result = _to_poly_number(operation(operand1, operand2))
+        except:
+            logging.exception("Operational error")
 
-        operation = getattr(operator, cur_oper, operator.add)
-        operand1 = int(op1)
-        operand2 = int(op2)
-        result = operation(operand1, operand2)
-        # cur = g.db.execute('INSERT INTO history VALUES %s, %s, "%s", %s;' % (op1, oper, op2, result))
+        if result != '':
+            g.db.execute("""
+                INSERT INTO entries (operand1, operator, operand2, result) 
+                VALUES ('%s', '%s', '%s', '%s');""" % (op1, cur_oper, op2, result)
+            )
+            g.db.commit()
+
+        logging.info(operand1, cur_oper, operand2, result)
 
     return render_template('calculator.html', op=result, oper=new_oper)
 
